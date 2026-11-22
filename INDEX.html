@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prototipo - Mapa Interactivo de Lotes</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .lote {
+      cursor: pointer;
+      transition: all 0.2s ease;
+      stroke: #ffffff;
+      stroke-width: 2;
+      fill-opacity: 0.72;
+    }
+    .lote:hover {
+      fill-opacity: 0.9;
+      stroke: #0f172a;
+      stroke-width: 3;
+    }
+    .disponible { fill: #22c55e; } /* Verde */
+    .apartado   { fill: #eab308; } /* Amarillo */
+    .vendido    { fill: #ef4444; } /* Rojo */
+    .seleccionado { stroke: #0f172a; stroke-width: 4; fill-opacity: 0.92; }
+    .modo-dibujo svg {
+      cursor: crosshair;
+    }
+    .modo-dibujo .lote {
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans">
+
+  <!-- Barra Superior -->
+  <header class="bg-slate-900 text-white p-4 shadow-md flex flex-wrap justify-between items-center gap-4">
+    <div>
+      <h1 class="text-xl font-bold tracking-wide">Residencial Los Olivos — Masterplan</h1>
+      <p class="text-xs text-slate-400">Conectado a Google Sheets • Cambios guardados en navegador y nube</p>
+    </div>
+    <!-- Leyenda de Colores -->
+    <div class="flex gap-4 text-sm bg-slate-800 px-4 py-2 rounded-lg">
+      <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-green-500"></span> Disponible</span>
+      <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-yellow-500"></span> Apartado</span>
+      <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span> Vendido</span>
+    </div>
+  </header>
+
+  <!-- Contenedor Principal -->
+  <main class="max-w-7xl mx-auto p-4 grid grid-cols-1 lg:grid-cols-3 gap-6 mt-2">
+    
+    <!-- Zona del Mapa (2 columnas) -->
+    <div id="contenedor-mapa" class="lg:col-span-2 bg-white rounded-xl shadow-md p-4 border border-slate-200">
+      <div class="flex flex-wrap justify-between items-center gap-2 mb-3">
+        <div class="flex items-center gap-3">
+          <h2 class="font-semibold text-slate-700">Etapa 1 — Vista Aérea</h2>
+          <span id="contador" class="text-xs font-medium bg-slate-100 px-3 py-1 rounded-full text-slate-600"></span>
+        </div>
+
+        <!-- Controles de plano, dibujo y sincronización -->
+        <div class="flex flex-wrap items-center gap-2">
+          <input
+            type="file"
+            id="input-plano"
+            accept="image/*"
+            onchange="cargarPlanoFondo(event)"
+            class="hidden"
+          />
+          <button
+            type="button"
+            onclick="document.getElementById('input-plano').click()"
+            class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm transition cursor-pointer"
+          >
+            Subir plano
+          </button>
+          <button
+            type="button"
+            id="btn-quitar-plano"
+            onclick="quitarPlanoFondo()"
+            class="hidden bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition cursor-pointer"
+          >
+            Quitar imagen
+          </button>
+          <button
+            type="button"
+            id="btn-dibujar"
+            onclick="alternarModoDibujo()"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm transition cursor-pointer"
+          >
+            + Dibujar lote
+          </button>
+        </div>
+      </div>
+
+      <!-- Barra de sincronización con Google Sheets y respaldo -->
+      <div class="mb-3 bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg flex flex-wrap items-center justify-between gap-2 text-xs">
+        <span id="estado-guardado" class="text-slate-600 font-medium">Conectando con Google Sheets...</span>
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onclick="cargarDesdeGoogleSheets(true)"
+            class="bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-semibold px-2.5 py-1 rounded transition cursor-pointer"
+          >
+            Recargar de Sheets
+          </button>
+          <button
+            type="button"
+            onclick="sincronizarConGoogleSheets(true)"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-2.5 py-1 rounded transition cursor-pointer"
+          >
+            Guardar en Sheets
+          </button>
+          <button
+            type="button"
+            onclick="exportarRespaldoJson()"
+            class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-2.5 py-1 rounded transition cursor-pointer"
+          >
+            Respaldo .json
+          </button>
+          <input
+            type="file"
+            id="input-respaldo"
+            accept=".json,application/json"
+            onchange="importarRespaldoJson(event)"
+            class="hidden"
+          />
+          <button
+            type="button"
+            onclick="document.getElementById('input-respaldo').click()"
+            class="bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-semibold px-2.5 py-1 rounded transition cursor-pointer"
+          >
+            Cargar .json
+          </button>
+          <button
+            type="button"
+            onclick="restablecerDemo()"
+            class="text-rose-600 hover:text-rose-800 font-semibold px-2 py-1 rounded transition cursor-pointer"
+          >
+            Restablecer
+          </button>
+        </div>
+      </div>
+
+      <!-- Barra de ayuda activa solo al dibujar -->
+      <div id="barra-dibujo" class="hidden mb-3 bg-indigo-50 border border-indigo-200 text-indigo-900 px-3.5 py-2.5 rounded-lg flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div>
+          <span class="font-bold">Modo dibujo activo:</span> Haz clic en las esquinas del lote sobre el mapa.
+          <span id="info-puntos" class="ml-1 font-semibold text-indigo-700">(0 puntos marcados)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            onclick="deshacerPunto()"
+            class="bg-white hover:bg-indigo-100 border border-indigo-200 text-indigo-800 font-semibold px-2.5 py-1 rounded cursor-pointer"
+          >
+            Deshacer punto
+          </button>
+          <button
+            type="button"
+            id="btn-terminar-lote"
+            onclick="abrirFormularioNuevoLote()"
+            disabled
+            class="bg-indigo-600 disabled:opacity-40 hover:bg-indigo-700 text-white font-bold px-3 py-1 rounded cursor-pointer"
+          >
+            Terminar lote
+          </button>
+          <button
+            type="button"
+            onclick="cancelarDibujo()"
+            class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold px-2.5 py-1 rounded cursor-pointer"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+
+      <!-- Plano Vectorial Interactivo -->
+      <div class="bg-slate-200 rounded-lg overflow-hidden border border-slate-300 relative">
+        <svg id="mapa-svg" viewBox="0 0 600 400" class="w-full h-auto block" onclick="manejarClicMapa(event)">
+          <!-- Fondo por defecto -->
+          <g id="fondo-default">
+            <rect x="0" y="0" width="600" height="400" fill="#e2e8f0" />
+            <rect x="20" y="20" width="560" height="360" rx="12" fill="#dcfce7" />
+            <rect x="20" y="180" width="560" height="40" fill="#94a3b8" />
+            <line x1="20" y1="200" x2="580" y2="200" stroke="#ffffff" stroke-dasharray="10,10" stroke-width="2" />
+            <text x="240" y="204" fill="#ffffff" font-size="11" font-weight="bold">AVENIDA CENTRAL</text>
+          </g>
+
+          <!-- Imagen personalizada subida por el usuario -->
+          <image
+            id="imagen-plano-personalizado"
+            href=""
+            x="0"
+            y="0"
+            width="600"
+            height="400"
+            preserveAspectRatio="xMidYMid slice"
+            class="hidden"
+          />
+
+          <!-- Contenedor donde se renderizan dinámicamente todos los lotes -->
+          <g id="capa-lotes"></g>
+
+          <!-- Capa temporal para mostrar el polígono en construcción -->
+          <g id="capa-dibujo-temporal" pointer-events="none"></g>
+        </svg>
+      </div>
+      <p class="text-[11px] text-slate-400 mt-2">
+        Tip: Si tu hoja de Google Sheets está vacía la primera vez, haz clic en "Guardar en Sheets" para enviar los lotes iniciales y crear la tabla automáticamente.
+      </p>
+    </div>
+
+    <!-- Panel Lateral: Ficha Técnica y Cotizador en Vivo (1 columna) -->
+    <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200 flex flex-col justify-between">
+      <div id="panel-vacio" class="text-center py-16 text-slate-400">
+        <p class="text-lg font-medium">Ningún lote seleccionado</p>
+        <p class="text-sm mt-1">Haz clic en un terreno del mapa para ver su precio, medidas y cotizador.</p>
+      </div>
+
+      <div id="panel-detalle" class="hidden space-y-4">
+        <div class="flex justify-between items-center border-b pb-3">
+          <div>
+            <span class="text-xs uppercase tracking-wider text-slate-400 font-bold">Ficha Técnica</span>
+            <h3 id="det-id" class="text-2xl font-extrabold text-slate-800">Lote L-101</h3>
+          </div>
+          <span id="det-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase text-white bg-green-500">
+            Disponible
+          </span>
+        </div>
+
+        <!-- Datos Principales del Terreno -->
+        <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-lg text-sm">
+          <div>
+            <p class="text-slate-400 text-xs">Superficie</p>
+            <p id="det-area" class="font-bold text-slate-700">200 m²</p>
+          </div>
+          <div>
+            <p class="text-slate-400 text-xs">Medidas</p>
+            <p id="det-medidas" class="font-bold text-slate-700">10m x 20m</p>
+          </div>
+          <div>
+            <p class="text-slate-400 text-xs">Precio por m²</p>
+            <p id="det-precio-m2" class="font-bold text-slate-700">$2,500 MXN</p>
+          </div>
+          <div>
+            <p class="text-slate-400 text-xs">Precio Total</p>
+            <p id="det-total" class="font-extrabold text-emerald-600 text-base">$500,000 MXN</p>
+          </div>
+        </div>
+
+        <!-- Colindancias -->
+        <div class="bg-slate-50 p-3 rounded-lg text-sm border border-slate-100">
+          <p class="text-slate-400 text-xs font-semibold uppercase mb-1">Colindancias</p>
+          <p id="det-colindancias" class="text-slate-700 text-xs leading-relaxed"></p>
+        </div>
+
+        <!-- Cotizador Interactivo en Vivo -->
+        <div class="bg-emerald-50/70 p-3.5 rounded-lg text-sm border border-emerald-200 space-y-3">
+          <p class="text-emerald-900 text-xs font-bold uppercase">Cotizador Interactivo en Vivo</p>
+
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <label for="input-enganche" class="text-slate-600 font-medium">Enganche:</label>
+              <span id="label-enganche-pct" class="font-bold text-emerald-800">20%</span>
+            </div>
+            <input
+              id="input-enganche"
+              type="range"
+              min="10"
+              max="80"
+              step="5"
+              value="20"
+              oninput="recalcularCotizacion()"
+              class="w-full accent-emerald-600 cursor-pointer"
+            />
+            <p id="det-enganche-monto" class="text-xs font-bold text-slate-800 mt-0.5"></p>
+          </div>
+
+          <div>
+            <label for="select-plazo" class="block text-xs text-slate-600 font-medium mb-1">Plazo de financiamiento:</label>
+            <select
+              id="select-plazo"
+              onchange="recalcularCotizacion()"
+              class="w-full bg-white border border-emerald-200 rounded-md px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="12">12 meses</option>
+              <option value="18">18 meses</option>
+              <option value="24" selected>24 meses</option>
+              <option value="36">36 meses</option>
+              <option value="48">48 meses</option>
+            </select>
+          </div>
+
+          <div class="pt-2 border-t border-emerald-200/80 space-y-0.5">
+            <p id="det-saldo" class="text-xs text-slate-600"></p>
+            <p id="det-mensualidad" class="text-sm text-emerald-800 font-extrabold"></p>
+          </div>
+        </div>
+
+        <!-- Acción para Cliente -->
+        <div>
+          <a id="btn-whatsapp" href="#" target="_blank"
+             class="block w-full text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg shadow transition">
+            Solicitar cotización por WhatsApp
+          </a>
+        </div>
+
+        <!-- Simulador de Panel Administrativo -->
+        <div class="border-t pt-3 space-y-2.5">
+          <p class="text-xs font-bold uppercase text-slate-400">Modo Administrador (Estatus, edición y borrado)</p>
+          <div class="grid grid-cols-3 gap-2">
+            <button onclick="cambiarEstado('disponible')" class="bg-green-100 hover:bg-green-200 text-green-800 text-xs font-bold py-2 rounded cursor-pointer">
+              Disponible
+            </button>
+            <button onclick="cambiarEstado('apartado')" class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 text-xs font-bold py-2 rounded cursor-pointer">
+              Apartado
+            </button>
+            <button onclick="cambiarEstado('vendido')" class="bg-red-100 hover:bg-red-200 text-red-800 text-xs font-bold py-2 rounded cursor-pointer">
+              Vendido
+            </button>
+          </div>
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <button onclick="abrirModalEditarLote()" class="bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 text-xs font-bold py-2 rounded cursor-pointer">
+              Editar datos
+            </button>
+            <button onclick="eliminarLoteActual()" class="bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs font-bold py-2 rounded cursor-pointer">
+              Eliminar lote
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Ventana Modal para Guardar un Lote Nuevo -->
+  <div id="modal-nuevo-lote" class="hidden fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4 border border-slate-200">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="text-lg font-bold text-slate-800">Guardar nuevo lote</h3>
+        <button onclick="cerrarModalNuevoLote()" class="text-slate-400 hover:text-slate-700 text-xl leading-none cursor-pointer">&times;</button>
+      </div>
+
+      <form id="form-nuevo-lote" onsubmit="guardarNuevoLote(event)" class="space-y-3 text-sm">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Clave / ID del lote</label>
+            <input id="nuevo-id" type="text" required placeholder="Ej. L-301" class="w-full border rounded-lg px-3 py-1.5 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Estado inicial</label>
+            <select id="nuevo-estado" class="w-full border rounded-lg px-3 py-1.5 text-sm bg-white">
+              <option value="disponible" selected>Disponible</option>
+              <option value="apartado">Apartado</option>
+              <option value="vendido">Vendido</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Superficie (m²)</label>
+            <input id="nuevo-area" type="number" min="1" required value="200" class="w-full border rounded-lg px-3 py-1.5 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Medidas</label>
+            <input id="nuevo-medidas" type="text" required value="10m x 20m" class="w-full border rounded-lg px-3 py-1.5 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Precio / m²</label>
+            <input id="nuevo-precio-m2" type="number" min="1" required value="2500" class="w-full border rounded-lg px-3 py-1.5 text-sm" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Colindancias</label>
+          <textarea id="nuevo-colindancias" rows="2" class="w-full border rounded-lg px-3 py-1.5 text-xs">Norte: 10m con calle | Sur: 10m con lote colindante | Oriente: 20m con lote vecino | Poniente: 20m con área verde</textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Enganche base (%)</label>
+            <input id="nuevo-enganche" type="number" min="5" max="90" required value="20" class="w-full border rounded-lg px-3 py-1.5 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Plazo base (meses)</label>
+            <input id="nuevo-plazo" type="number" min="1" max="120" required value="24" class="w-full border rounded-lg px-3 py-1.5 text-sm" />
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button type="button" onclick="cerrarModalNuevoLote()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer">
+            Cancelar
+          </button>
+          <button type="submit" class="px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer">
+            Agregar lote al mapa
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Ventana Modal para Editar un Lote Existente -->
+  <div id="modal-editar-lote" class="hidden fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4 border border-slate-200">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="text-lg font-bold text-slate-800">Editar datos del lote</h3>
+        <button onclick="cerrarModalEditarLote()" class="text-slate-400 hover:text-slate-700 text-xl leading-none cursor-pointer">&times;</button>
+      </div>
+
+      <form id="form-editar-lote" onsubmit="guardarEdicionLote(event)" class="space-y-3 text-sm">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Clave / ID del lote</label>
+            <input id="editar-id" type="text" required class="w-full border rounded-lg px-3 py-1.5 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Estado</label>
+            <select id="editar-estado" class="w-full border rounded-lg px-3 py-1.5 text-sm bg-white">
+              <option value="disponible">Disponible</option>
+              <option value="apartado">Apartado</option>
+              <option value="vendido">Vendido</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Superficie (m²)</label>
+            <input id="editar-area" type="number" min="1" required class="w-full border rounded-lg px-3 py-1.5 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Medidas</label>
+            <input id="editar-medidas" type="text" required class="w-full border rounded-lg px-3 py-1.5 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Precio / m²</label>
+            <input id="editar-precio-m2" type="number" min="1" required class="w-full border rounded-lg px-3 py-1.5 text-sm" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Colindancias</label>
+          <textarea id="editar-colindancias" rows="2" class="w-full border rounded-lg px-3 py-1.5 text-xs"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Enganche base (%)</label>
+            <input id="editar-enganche" type="number" min="5" max="90" required class="w-full border rounded-lg px-3 py-1.5 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Plazo base (meses)</label>
+            <input id="editar-plazo" type="number" min="1" max="120" required class="w-full border rounded-lg px-3 py-1.5 text-sm" />
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button type="button" onclick="cerrarModalEditarLote()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer">
+            Cancelar
+          </button>
+          <button type="submit" class="px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer">
+            Guardar cambios
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx3WLEIUulatr7mjSxw-_39T0edUioCM0RpJF6Uc1hLuJwOemGCBiGMXEdLjs-qspO-/exec';
+    const STORAGE_KEY = 'prototipo_lotes_masterplan_v1';
+
+    const LOTES_INICIALES = {
+      'L-101': {
+        id: 'L-101', area: 200, medidas: '10m x 20m', precioM2: 2500, estado: 'disponible',
+        points: '50,50 150,50 150,165 50,165', labelX: 100, labelY: 112,
+        colindancias: 'Norte: 10m con calle privada | Sur: 10m con L-201 | Oriente: 20m con L-102 | Poniente: 20m con área verde',
+        enganchePct: 20, plazoMeses: 24
+      },
+      'L-102': {
+        id: 'L-102', area: 200, medidas: '10m x 20m', precioM2: 2500, estado: 'apartado',
+        points: '160,50 260,50 260,165 160,165', labelX: 210, labelY: 112,
+        colindancias: 'Norte: 10m con calle privada | Sur: 10m con L-202 | Oriente: 20m con L-103 | Poniente: 20m con L-101',
+        enganchePct: 20, plazoMeses: 24
+      },
+      'L-103': {
+        id: 'L-103', area: 200, medidas: '10m x 20m', precioM2: 2500, estado: 'vendido',
+        points: '270,50 370,50 370,165 270,165', labelX: 320, labelY: 112,
+        colindancias: 'Norte: 10m con calle privada | Sur: 10m con L-202 | Oriente: 20m con L-104 | Poniente: 20m con L-102',
+        enganchePct: 25, plazoMeses: 18
+      },
+      'L-104': {
+        id: 'L-104', area: 320, medidas: '16m x 20m', precioM2: 2700, estado: 'disponible',
+        points: '380,50 540,50 540,165 380,165', labelX: 460, labelY: 112,
+        colindancias: 'Norte: 16m con calle privada | Sur: 16m con Av. Central | Oriente: 20m con barda perimetral | Poniente: 20m con L-103',
+        enganchePct: 20, plazoMeses: 36
+      },
+      'L-201': {
+        id: 'L-201', area: 240, medidas: '12m x 20m', precioM2: 2400, estado: 'disponible',
+        points: '50,235 170,235 170,350 50,350', labelX: 110, labelY: 298,
+        colindancias: 'Norte: 12m con L-101 | Sur: 12m con Av. Central | Oriente: 20m con L-202 | Poniente: 20m con área verde',
+        enganchePct: 15, plazoMeses: 36
+      },
+      'L-202': {
+        id: 'L-202', area: 240, medidas: '12m x 20m', precioM2: 2400, estado: 'disponible',
+        points: '180,235 300,235 300,350 180,350', labelX: 240, labelY: 298,
+        colindancias: 'Norte: 12m con L-102 | Sur: 12m con Av. Central | Oriente: 20m con L-203 | Poniente: 20m con L-201',
+        enganchePct: 15, plazoMeses: 36
+      },
+      'L-203': {
+        id: 'L-203', area: 240, medidas: '12m x 20m', precioM2: 2400, estado: 'apartado',
+        points: '310,235 430,235 430,350 310,350', labelX: 370, labelY: 298,
+        colindancias: 'Norte: 12m con L-103 | Sur: 12m con Av. Central | Oriente: 20m con L-204 | Poniente: 20m con L-202',
+        enganchePct: 20, plazoMeses: 24
+      },
+      'L-204': {
+        id: 'L-204', area: 200, medidas: '10m x 20m', precioM2: 2600, estado: 'disponible',
+        points: '440,235 540,235 540,350 440,350', labelX: 490, labelY: 298,
+        colindancias: 'Norte: 10m con L-104 | Sur: 10m con Av. Central | Oriente: 20m con barda perimetral | Poniente: 20m con L-203',
+        enganchePct: 20, plazoMeses: 24
+      }
+    };
+
+    function clonarIniciales() {
+      return JSON.parse(JSON.stringify(LOTES_INICIALES));
+    }
+
+    function cargarDesdeStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return clonarIniciales();
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+          return parsed;
+        }
+      } catch (e) {
+        console.warn('No se pudo leer el almacenamiento local:', e);
+      }
+      return clonarIniciales();
+    }
+
+    function guardarEnStorage(textoEstado = null) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(lotes));
+        if (textoEstado) {
+          document.getElementById('estado-guardado').innerText = textoEstado;
+        } else {
+          const hora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          document.getElementById('estado-guardado').innerText = `Guardado local (${hora})`;
+        }
+      } catch (e) {
+        document.getElementById('estado-guardado').innerText = 'Aviso: sin espacio en almacenamiento local';
+      }
+    }
+
+    function normalizarLotesImportados(listaOObjeto) {
+      const resultado = {};
+      const items = Array.isArray(listaOObjeto) ? listaOObjeto : Object.values(listaOObjeto || {});
+
+      items.forEach(item => {
+        if (!item || !item.id || !item.points) return;
+        const id = String(item.id).trim();
+        const estadoRaw = String(item.estado || 'disponible').toLowerCase().trim();
+        const estado = ['disponible', 'apartado', 'vendido'].includes(estadoRaw) ? estadoRaw : 'disponible';
+
+        resultado[id] = {
+          id,
+          area: Number(item.area) || 200,
+          medidas: String(item.medidas || '10m x 20m'),
+          precioM2: Number(item.precioM2) || 2500,
+          estado,
+          points: String(item.points),
+          labelX: Number(item.labelX) || 100,
+          labelY: Number(item.labelY) || 100,
+          colindancias: String(item.colindancias || 'Por definir'),
+          enganchePct: Number(item.enganchePct) || 20,
+          plazoMeses: Number(item.plazoMeses) || 24
+        };
+      });
+
+      return resultado;
+    }
+
+    async function cargarDesdeGoogleSheets(mostrarAlertaSiVacio = false) {
+      if (!GOOGLE_SCRIPT_URL) return;
+      document.getElementById('estado-guardado').innerText = 'Cargando desde Google Sheets...';
+
+      try {
+        const respuesta = await fetch(GOOGLE_SCRIPT_URL, { method: 'GET' });
+        const data = await respuesta.json();
+        const cargados = normalizarLotesImportados(data.lotes);
+
+        if (Object.keys(cargados).length > 0) {
+          lotes = cargados;
+          loteActual = null;
+          document.getElementById('panel-detalle').classList.add('hidden');
+          document.getElementById('panel-vacio').classList.remove('hidden');
+          renderizarLotesEnMapa();
+          actualizarContador();
+          const hora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          guardarEnStorage(`Sincronizado con Google Sheets (${hora})`);
+        } else {
+          guardarEnStorage('Hoja vacía — usa "Guardar en Sheets" para subir lotes');
+          if (mostrarAlertaSiVacio) {
+            alert('La hoja de Google Sheets aún no tiene filas de lotes. Haz clic en "Guardar en Sheets" para subir los actuales.');
+          }
+        }
+      } catch (err) {
+        console.warn('Error al leer Google Sheets:', err);
+        guardarEnStorage('Sin conexión a Sheets — usando datos locales');
+      }
+    }
+
+    async function sincronizarConGoogleSheets(mostrarConfirmacion = false) {
+      if (!GOOGLE_SCRIPT_URL) return;
+      document.getElementById('estado-guardado').innerText = 'Guardando en Google Sheets...';
+
+      try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ lotes })
+        });
+        const hora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        guardarEnStorage(`Enviado a Google Sheets (${hora})`);
+        if (mostrarConfirmacion) {
+          alert('Datos enviados a tu hoja de Google Sheets.');
+        }
+      } catch (err) {
+        console.warn('Error al enviar a Google Sheets:', err);
+        guardarEnStorage('Guardado local (error al enviar a Sheets)');
+      }
+    }
+
+    let lotes = cargarDesdeStorage();
+    let loteActual = null;
+    let modoDibujo = false;
+    let puntosDibujo = [];
+
+    function renderizarLotesEnMapa() {
+      const capaLotes = document.getElementById('capa-lotes');
+      capaLotes.innerHTML = '';
+
+      Object.values(lotes).forEach(lote => {
+        if (!lote.points) return;
+
+        const poligono = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        poligono.setAttribute('id', lote.id);
+        poligono.setAttribute('class', `lote ${lote.estado}${loteActual === lote.id ? ' seleccionado' : ''}`);
+        poligono.setAttribute('points', lote.points);
+        poligono.onclick = () => seleccionarLote(lote.id);
+
+        const lx = typeof lote.labelX === 'number' ? lote.labelX : 100;
+        const ly = typeof lote.labelY === 'number' ? lote.labelY : 100;
+
+        const etiqueta = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        etiqueta.setAttribute('x', lx);
+        etiqueta.setAttribute('y', ly);
+        etiqueta.setAttribute('fill', 'white');
+        etiqueta.setAttribute('font-weight', 'bold');
+        etiqueta.setAttribute('font-size', '13');
+        etiqueta.setAttribute('text-anchor', 'middle');
+        etiqueta.setAttribute('pointer-events', 'none');
+        etiqueta.textContent = lote.id;
+
+        capaLotes.appendChild(poligono);
+        capaLotes.appendChild(etiqueta);
+      });
+    }
+
+    function abrirModalEditarLote() {
+      if (!loteActual || !lotes[loteActual]) return;
+      const lote = lotes[loteActual];
+
+      document.getElementById('editar-id').value = lote.id;
+      document.getElementById('editar-estado').value = lote.estado;
+      document.getElementById('editar-area').value = lote.area;
+      document.getElementById('editar-medidas').value = lote.medidas;
+      document.getElementById('editar-precio-m2').value = lote.precioM2;
+      document.getElementById('editar-colindancias').value = lote.colindancias || '';
+      document.getElementById('editar-enganche').value = lote.enganchePct;
+      document.getElementById('editar-plazo').value = lote.plazoMeses;
+
+      document.getElementById('modal-editar-lote').classList.remove('hidden');
+    }
+
+    function cerrarModalEditarLote() {
+      document.getElementById('modal-editar-lote').classList.add('hidden');
+    }
+
+    function guardarEdicionLote(event) {
+      event.preventDefault();
+      if (!loteActual || !lotes[loteActual]) return;
+
+      const anteriorId = loteActual;
+      const lotePrevio = lotes[anteriorId];
+
+      let nuevoId = document.getElementById('editar-id').value.trim().toUpperCase().replace(/\s+/g, '-');
+      if (!nuevoId) return;
+
+      if (nuevoId !== anteriorId && lotes[nuevoId]) {
+        alert(`Ya existe otro lote con la clave "${nuevoId}". Elige una clave distinta.`);
+        return;
+      }
+
+      const area = parseInt(document.getElementById('editar-area').value, 10) || 200;
+      const medidas = document.getElementById('editar-medidas').value.trim() || '10m x 20m';
+      const precioM2 = parseInt(document.getElementById('editar-precio-m2').value, 10) || 2500;
+      const estado = document.getElementById('editar-estado').value;
+      const colindancias = document.getElementById('editar-colindancias').value.trim() || 'Por definir';
+      const enganchePct = parseInt(document.getElementById('editar-enganche').value, 10) || 20;
+      const plazoMeses = parseInt(document.getElementById('editar-plazo').value, 10) || 24;
+
+      const loteActualizado = {
+        ...lotePrevio,
+        id: nuevoId,
+        area,
+        medidas,
+        precioM2,
+        estado,
+        colindancias,
+        enganchePct,
+        plazoMeses
+      };
+
+      if (nuevoId !== anteriorId) {
+        delete lotes[anteriorId];
+      }
+      lotes[nuevoId] = loteActualizado;
+      loteActual = nuevoId;
+
+      cerrarModalEditarLote();
+      renderizarLotesEnMapa();
+      actualizarContador();
+      guardarEnStorage();
+      sincronizarConGoogleSheets(false);
+      seleccionarLote(loteActual);
+    }
+
+    function eliminarLoteActual() {
+      if (!loteActual || !lotes[loteActual]) return;
+      const idAEliminar = loteActual;
+
+      if (!confirm(`¿Seguro que deseas eliminar el lote ${idAEliminar} del mapa?`)) {
+        return;
+      }
+
+      delete lotes[idAEliminar];
+      loteActual = null;
+
+      document.getElementById('panel-detalle').classList.add('hidden');
+      document.getElementById('panel-vacio').classList.remove('hidden');
+
+      renderizarLotesEnMapa();
+      actualizarContador();
+      guardarEnStorage();
+      sincronizarConGoogleSheets(false);
+    }
+
+    function exportarRespaldoJson() {
+      const respaldo = {
+        proyecto: 'Residencial Los Olivos — Masterplan',
+        exportadoEn: new Date().toISOString(),
+        totalLotes: Object.keys(lotes).length,
+        lotes: lotes
+      };
+      const blob = new Blob([JSON.stringify(respaldo, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const enlace = document.createElement('a');
+      const fechaCorta = new Date().toISOString().slice(0, 10);
+      enlace.href = url;
+      enlace.download = `respaldo-lotes-${fechaCorta}.json`;
+      document.body.appendChild(enlace);
+      enlace.click();
+      document.body.removeChild(enlace);
+      URL.revokeObjectURL(url);
+    }
+
+    function importarRespaldoJson(event) {
+      const archivo = event.target.files[0];
+      if (!archivo) return;
+
+      const lector = new FileReader();
+      lector.onload = function(e) {
+        try {
+          const datos = JSON.parse(e.target.result);
+          const lotesImportados = normalizarLotesImportados(datos.lotes && typeof datos.lotes === 'object' ? datos.lotes : datos);
+
+          if (!lotesImportados || Object.keys(lotesImportados).length === 0) {
+            alert('El archivo no contiene lotes válidos.');
+            return;
+          }
+
+          lotes = lotesImportados;
+          loteActual = null;
+          document.getElementById('panel-detalle').classList.add('hidden');
+          document.getElementById('panel-vacio').classList.remove('hidden');
+
+          renderizarLotesEnMapa();
+          actualizarContador();
+          guardarEnStorage();
+          sincronizarConGoogleSheets(false);
+          alert(`Respaldo cargado: ${Object.keys(lotes).length} lotes importados.`);
+        } catch (err) {
+          alert('No se pudo leer el archivo JSON. Verifica que sea un respaldo exportado desde esta herramienta.');
+        }
+        event.target.value = '';
+      };
+      lector.readAsText(archivo);
+    }
+
+    function restablecerDemo() {
+      if (!confirm('¿Deseas restablecer el mapa a los 8 lotes originales y borrar los cambios guardados en este navegador?')) {
+        return;
+      }
+      localStorage.removeItem(STORAGE_KEY);
+      lotes = clonarIniciales();
+      loteActual = null;
+      document.getElementById('panel-detalle').classList.add('hidden');
+      document.getElementById('panel-vacio').classList.remove('hidden');
+      renderizarLotesEnMapa();
+      actualizarContador();
+      guardarEnStorage('Demo original restablecida');
+    }
+
+    function obtenerCoordenadasSvg(event) {
+      const svg = document.getElementById('mapa-svg');
+      const rect = svg.getBoundingClientRect();
+      const x = Math.round(((event.clientX - rect.left) / rect.width) * 600);
+      const y = Math.round(((event.clientY - rect.top) / rect.height) * 400);
+      return { x, y };
+    }
+
+    function alternarModoDibujo() {
+      if (modoDibujo) {
+        cancelarDibujo();
+      } else {
+        modoDibujo = true;
+        puntosDibujo = [];
+        document.getElementById('contenedor-mapa').classList.add('modo-dibujo');
+        document.getElementById('barra-dibujo').classList.remove('hidden');
+        document.getElementById('btn-dibujar').innerText = 'Dibujando...';
+        actualizarVistaDibujoTemporal();
+      }
+    }
+
+    function cancelarDibujo() {
+      modoDibujo = false;
+      puntosDibujo = [];
+      document.getElementById('contenedor-mapa').classList.remove('modo-dibujo');
+      document.getElementById('barra-dibujo').classList.add('hidden');
+      document.getElementById('btn-dibujar').innerText = '+ Dibujar lote';
+      document.getElementById('capa-dibujo-temporal').innerHTML = '';
+    }
+
+    function manejarClicMapa(event) {
+      if (!modoDibujo) return;
+      const pt = obtenerCoordenadasSvg(event);
+
+      if (puntosDibujo.length >= 3) {
+        const primero = puntosDibujo[0];
+        const distancia = Math.hypot(pt.x - primero.x, pt.y - primero.y);
+        if (distancia < 12) {
+          abrirFormularioNuevoLote();
+          return;
+        }
+      }
+
+      puntosDibujo.push(pt);
+      actualizarVistaDibujoTemporal();
+    }
+
+    function deshacerPunto() {
+      if (puntosDibujo.length === 0) return;
+      puntosDibujo.pop();
+      actualizarVistaDibujoTemporal();
+    }
+
+    function actualizarVistaDibujoTemporal() {
+      const capa = document.getElementById('capa-dibujo-temporal');
+      const contadorPuntos = document.getElementById('info-puntos');
+      const btnTerminar = document.getElementById('btn-terminar-lote');
+
+      contadorPuntos.innerText = `(${puntosDibujo.length} ${puntosDibujo.length === 1 ? 'punto marcado' : 'puntos marcados'})`;
+      btnTerminar.disabled = puntosDibujo.length < 3;
+
+      if (puntosDibujo.length === 0) {
+        capa.innerHTML = '';
+        return;
+      }
+
+      const coordsStr = puntosDibujo.map(p => `${p.x},${p.y}`).join(' ');
+      let svgHtml = '';
+
+      if (puntosDibujo.length >= 3) {
+        svgHtml += `<polygon points="${coordsStr}" fill="#4f46e5" fill-opacity="0.3" stroke="#4f46e5" stroke-width="2" stroke-dasharray="5,4" />`;
+      } else if (puntosDibujo.length === 2) {
+        svgHtml += `<polyline points="${coordsStr}" fill="none" stroke="#4f46e5" stroke-width="2.5" stroke-dasharray="5,4" />`;
+      }
+
+      puntosDibujo.forEach((p, idx) => {
+        const esPrimero = idx === 0 && puntosDibujo.length >= 3;
+        svgHtml += `<circle cx="${p.x}" cy="${p.y}" r="${esPrimero ? 7 : 5}" fill="${esPrimero ? '#10b981' : '#4f46e5'}" stroke="#ffffff" stroke-width="2" />`;
+      });
+
+      capa.innerHTML = svgHtml;
+    }
+
+    function abrirFormularioNuevoLote() {
+      if (puntosDibujo.length < 3) return;
+      const numeroSugerido = Object.keys(lotes).length + 101;
+      document.getElementById('nuevo-id').value = `L-${numeroSugerido}`;
+      document.getElementById('modal-nuevo-lote').classList.remove('hidden');
+    }
+
+    function cerrarModalNuevoLote() {
+      document.getElementById('modal-nuevo-lote').classList.add('hidden');
+    }
+
+    function calcularCentroide(puntos) {
+      const sumX = puntos.reduce((acc, p) => acc + p.x, 0);
+      const sumY = puntos.reduce((acc, p) => acc + p.y, 0);
+      return {
+        x: Math.round(sumX / puntos.length),
+        y: Math.round(sumY / puntos.length) + 4
+      };
+    }
+
+    function guardarNuevoLote(event) {
+      event.preventDefault();
+      if (puntosDibujo.length < 3) return;
+
+      let id = document.getElementById('nuevo-id').value.trim().toUpperCase().replace(/\s+/g, '-');
+      if (!id) return;
+      if (lotes[id]) {
+        id = `${id}-${Math.floor(Math.random() * 90 + 10)}`;
+      }
+
+      const area = parseInt(document.getElementById('nuevo-area').value, 10) || 200;
+      const medidas = document.getElementById('nuevo-medidas').value.trim() || '10m x 20m';
+      const precioM2 = parseInt(document.getElementById('nuevo-precio-m2').value, 10) || 2500;
+      const estado = document.getElementById('nuevo-estado').value;
+      const colindancias = document.getElementById('nuevo-colindancias').value.trim() || 'Por definir';
+      const enganchePct = parseInt(document.getElementById('nuevo-enganche').value, 10) || 20;
+      const plazoMeses = parseInt(document.getElementById('nuevo-plazo').value, 10) || 24;
+
+      const coordsStr = puntosDibujo.map(p => `${p.x},${p.y}`).join(' ');
+      const centro = calcularCentroide(puntosDibujo);
+
+      lotes[id] = {
+        id, area, medidas, precioM2, estado,
+        points: coordsStr, labelX: centro.x, labelY: centro.y,
+        colindancias, enganchePct, plazoMeses
+      };
+
+      cerrarModalNuevoLote();
+      cancelarDibujo();
+      renderizarLotesEnMapa();
+      actualizarContador();
+      guardarEnStorage();
+      sincronizarConGoogleSheets(false);
+      seleccionarLote(id);
+    }
+
+    function cargarPlanoFondo(event) {
+      const archivo = event.target.files[0];
+      if (!archivo) return;
+
+      const lector = new FileReader();
+      lector.onload = function(e) {
+        const imgSvg = document.getElementById('imagen-plano-personalizado');
+        imgSvg.setAttribute('href', e.target.result);
+        imgSvg.classList.remove('hidden');
+
+        document.getElementById('fondo-default').classList.add('hidden');
+        document.getElementById('btn-quitar-plano').classList.remove('hidden');
+      };
+      lector.readAsDataURL(archivo);
+    }
+
+    function quitarPlanoFondo() {
+      const imgSvg = document.getElementById('imagen-plano-personalizado');
+      imgSvg.setAttribute('href', '');
+      imgSvg.classList.add('hidden');
+
+      document.getElementById('fondo-default').classList.remove('hidden');
+      document.getElementById('btn-quitar-plano').classList.add('hidden');
+      document.getElementById('input-plano').value = '';
+    }
+
+    function actualizarContador() {
+      const disponibles = Object.values(lotes).filter(l => l.estado === 'disponible').length;
+      const total = Object.keys(lotes).length;
+      document.getElementById('contador').innerText = `${disponibles} de ${total} lotes disponibles`;
+    }
+
+    function recalcularCotizacion() {
+      if (!loteActual || !lotes[loteActual]) return;
+      const lote = lotes[loteActual];
+
+      const enganchePct = parseInt(document.getElementById('input-enganche').value, 10);
+      const plazoMeses = parseInt(document.getElementById('select-plazo').value, 10);
+
+      lote.enganchePct = enganchePct;
+      lote.plazoMeses = plazoMeses;
+
+      const total = lote.area * lote.precioM2;
+      const montoEnganche = Math.round(total * (enganchePct / 100));
+      const saldoFinanciar = total - montoEnganche;
+      const mensualidad = Math.round(saldoFinanciar / plazoMeses);
+
+      document.getElementById('label-enganche-pct').innerText = `${enganchePct}%`;
+      document.getElementById('det-enganche-monto').innerText = `Monto de enganche: $${montoEnganche.toLocaleString()} MXN`;
+      document.getElementById('det-saldo').innerText = `Saldo a financiar: $${saldoFinanciar.toLocaleString()} MXN`;
+      document.getElementById('det-mensualidad').innerText = `Mensualidad estimada: ~$${mensualidad.toLocaleString()} MXN (${plazoMeses} meses)`;
+
+      const textoPlano = [
+        `Hola, me interesa información sobre el Lote ${lote.id}:`,
+        `• Superficie: ${lote.area} m² (${lote.medidas})`,
+        `• Precio total: $${total.toLocaleString()} MXN`,
+        `• Colindancias: ${lote.colindancias}`,
+        `• Enganche elegido (${enganchePct}%): $${montoEnganche.toLocaleString()} MXN`,
+        `• Plazo elegido: ${plazoMeses} meses (~$${mensualidad.toLocaleString()} MXN/mes)`
+      ].join('\n');
+
+      document.getElementById('btn-whatsapp').href = `https://wa.me/5210000000000?text=${encodeURIComponent(textoPlano)}`;
+      guardarEnStorage();
+    }
+
+    function seleccionarLote(id) {
+      if (modoDibujo || !lotes[id]) return;
+      loteActual = id;
+      const lote = lotes[id];
+
+      document.querySelectorAll('.lote').forEach(el => el.classList.remove('seleccionado'));
+      const elActual = document.getElementById(id);
+      if (elActual) elActual.classList.add('seleccionado');
+
+      document.getElementById('panel-vacio').classList.add('hidden');
+      document.getElementById('panel-detalle').classList.remove('hidden');
+
+      const total = lote.area * lote.precioM2;
+
+      document.getElementById('det-id').innerText = `Lote ${lote.id}`;
+      document.getElementById('det-area').innerText = `${lote.area} m²`;
+      document.getElementById('det-medidas').innerText = lote.medidas;
+      document.getElementById('det-precio-m2').innerText = `$${lote.precioM2.toLocaleString()} MXN`;
+      document.getElementById('det-total').innerText = `$${total.toLocaleString()} MXN`;
+      document.getElementById('det-colindancias').innerText = lote.colindancias;
+
+      document.getElementById('input-enganche').value = lote.enganchePct;
+      document.getElementById('select-plazo').value = lote.plazoMeses;
+
+      const badge = document.getElementById('det-badge');
+      badge.innerText = lote.estado;
+      badge.className = 'px-3 py-1 rounded-full text-xs font-bold uppercase text-white ' +
+        (lote.estado === 'disponible' ? 'bg-green-500' : lote.estado === 'apartado' ? 'bg-yellow-500' : 'bg-red-500');
+
+      recalcularCotizacion();
+    }
+
+    function cambiarEstado(nuevoEstado) {
+      if (!loteActual || !lotes[loteActual]) return;
+      lotes[loteActual].estado = nuevoEstado;
+
+      renderizarLotesEnMapa();
+      actualizarContador();
+      guardarEnStorage();
+      sincronizarConGoogleSheets(false);
+      seleccionarLote(loteActual);
+    }
+
+    renderizarLotesEnMapa();
+    actualizarContador();
+    cargarDesdeGoogleSheets(false);
+  </script>
+</body>
+</html>
