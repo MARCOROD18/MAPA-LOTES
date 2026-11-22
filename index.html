@@ -130,7 +130,7 @@
             onclick="activarModoMarcar('vendido')"
             class="bg-red-600 hover:bg-red-700 text-white font-semibold px-2.5 py-1 rounded transition cursor-pointer ring-2 ring-offset-1 ring-red-600"
           >
-            ? Vendido
+            ● Vendido
           </button>
           <button
             type="button"
@@ -138,7 +138,7 @@
             onclick="activarModoMarcar('apartado')"
             class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-2.5 py-1 rounded transition cursor-pointer"
           >
-            ? Apartado
+            ● Apartado
           </button>
           <button
             type="button"
@@ -146,7 +146,7 @@
             onclick="activarModoMarcar('disponible')"
             class="bg-green-600 hover:bg-green-700 text-white font-semibold px-2.5 py-1 rounded transition cursor-pointer"
           >
-            ? Disponible
+            ● Disponible
           </button>
           <button
             type="button"
@@ -224,7 +224,7 @@
         >
           <g id="viewport-plano">
             <!-- Fondo base cuando no se ha subido imagen -->
-            <g id="fondo-default"class="hidden">
+            <g id="fondo-default" class="hidden">
               <rect x="0" y="0" width="800" height="550" fill="#f1f5f9" />
               <text x="400" y="275" text-anchor="middle" fill="#64748b" font-size="18" font-weight="bold">
                 Sube la imagen de tu plano del condominio con "Subir plano"
@@ -240,13 +240,14 @@
               width="800"
               height="550"
               preserveAspectRatio="xMidYMid meet"
-              />
+            />
 
             <!-- Capa exclusiva de marcas de estatus sobre el plano -->
             <g id="capa-marcas"></g>
           </g>
         </svg>
       </div>
+      <p id="aviso-imagen-plano" class="text-[11px] text-slate-500 mt-2"></p>
     </div>
 
     <!-- Panel Lateral: Detalle de la Marca Seleccionada -->
@@ -307,7 +308,7 @@
   <script>
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby1gF9DPHHhqgZVJ30pdRdNlPueDw3kfdqKmnFf0hf0ruR-QL22KaEwBA9UFBSCTxQr/exec';
     const STORAGE_KEY = 'plano_estatus_lotes_v1';
-    const PLANO_FIJO_URL='bosque-fracciones.jpg';
+    const PLANO_FIJO_URL = 'bosque-fracciones.jpg';
 
     let marcas = cargarMarcasLocales();
     let marcaSeleccionadaId = null;
@@ -482,7 +483,7 @@
       capa.innerHTML = '';
       if (!marcasVisibles) return;
 
-      marcas.forEach((m, idx) => {
+      marcas.forEach((m) => {
         const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         g.setAttribute('class', 'marca-lote');
         g.setAttribute('transform', `translate(${m.x}, ${m.y})`);
@@ -596,9 +597,11 @@
       lector.onload = function(e) {
         const imgSvg = document.getElementById('imagen-plano-personalizado');
         imgSvg.setAttribute('href', e.target.result);
+        imgSvg.setAttribute('xlink:href', e.target.result);
         imgSvg.classList.remove('hidden');
         document.getElementById('fondo-default').classList.add('hidden');
         document.getElementById('btn-quitar-plano').classList.remove('hidden');
+        document.getElementById('aviso-imagen-plano').innerText = 'Plano cargado desde archivo local.';
         resetearVistaPlano();
       };
       lector.readAsDataURL(archivo);
@@ -606,9 +609,17 @@
 
     function quitarPlanoFondo() {
       const imgSvg = document.getElementById('imagen-plano-personalizado');
-      imgSvg.setAttribute('href', '');
-      imgSvg.classList.add('hidden');
-      document.getElementById('fondo-default').classList.remove('hidden');
+      if (PLANO_FIJO_URL) {
+        imgSvg.setAttribute('href', PLANO_FIJO_URL);
+        imgSvg.setAttribute('xlink:href', PLANO_FIJO_URL);
+        imgSvg.classList.remove('hidden');
+        document.getElementById('fondo-default').classList.add('hidden');
+      } else {
+        imgSvg.setAttribute('href', '');
+        imgSvg.removeAttribute('xlink:href');
+        imgSvg.classList.add('hidden');
+        document.getElementById('fondo-default').classList.remove('hidden');
+      }
       document.getElementById('btn-quitar-plano').classList.add('hidden');
       document.getElementById('input-plano').value = '';
       resetearVistaPlano();
@@ -710,12 +721,24 @@
         guardarMarcasLocales('Guardado local (error al enviar a Sheets)');
       }
     }
-if (PLANO_FIJO_URL) {
-  const imgInicial = document.getElementById('imagen-plano-personalizado');
-  imgInicial.setAttribute('href', PLANO_FIJO_URL);
-  imgInicial.classList.remove('hidden');
-  document.getElementById('fondo-default').classList.add('hidden');
-}
+
+    if (PLANO_FIJO_URL) {
+      const imgInicial = document.getElementById('imagen-plano-personalizado');
+      const fondoDef = document.getElementById('fondo-default');
+      const aviso = document.getElementById('aviso-imagen-plano');
+
+      imgInicial.setAttribute('href', PLANO_FIJO_URL);
+      imgInicial.setAttribute('xlink:href', PLANO_FIJO_URL);
+      imgInicial.classList.remove('hidden');
+      if (fondoDef) fondoDef.classList.add('hidden');
+
+      imgInicial.addEventListener('error', () => {
+        if (aviso) {
+          aviso.innerHTML = `No se encontró <strong>${PLANO_FIJO_URL}</strong> en la raíz del repositorio. Verifica que el archivo exista con ese nombre exacto en GitHub o usa <strong>Subir plano</strong>.`;
+        }
+      });
+    }
+
     renderizarMarcas();
     actualizarContador();
     cargarDesdeGoogleSheets(false);
