@@ -35,8 +35,8 @@
   <!-- Barra Superior -->
   <header class="bg-slate-900 text-white p-4 shadow-md flex flex-wrap justify-between items-center gap-4">
     <div>
-      <h1 class="text-xl font-bold tracking-wide">Residencial Los Olivos — Masterplan</h1>
-      <p class="text-xs text-slate-400">Conectado a Google Sheets • Cambios guardados en navegador y nube</p>
+      <h1 class="text-xl font-bold tracking-wide">Residencial Los Olivos â€” Masterplan</h1>
+      <p class="text-xs text-slate-400">Conectado a Google Sheets â€¢ Cambios guardados en navegador y nube</p>
     </div>
     <!-- Leyenda de Colores -->
     <div class="flex gap-4 text-sm bg-slate-800 px-4 py-2 rounded-lg">
@@ -53,11 +53,11 @@
     <div id="contenedor-mapa" class="lg:col-span-2 bg-white rounded-xl shadow-md p-4 border border-slate-200">
       <div class="flex flex-wrap justify-between items-center gap-2 mb-3">
         <div class="flex items-center gap-3">
-          <h2 class="font-semibold text-slate-700">Etapa 1 — Vista Aérea</h2>
+          <h2 class="font-semibold text-slate-700">Etapa 1 â€” Vista AÃ©rea</h2>
           <span id="contador" class="text-xs font-medium bg-slate-100 px-3 py-1 rounded-full text-slate-600"></span>
         </div>
 
-        <!-- Controles de plano, dibujo y sincronización -->
+        <!-- Controles de plano, dibujo y sincronizaciÃ³n -->
         <div class="flex flex-wrap items-center gap-2">
           <input
             type="file"
@@ -92,7 +92,7 @@
         </div>
       </div>
 
-      <!-- Barra de sincronización con Google Sheets y respaldo -->
+      <!-- Barra de sincronizaciÃ³n con Google Sheets y respaldo -->
       <div class="mb-3 bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg flex flex-wrap items-center justify-between gap-2 text-xs">
         <span id="estado-guardado" class="text-slate-600 font-medium">Conectando con Google Sheets...</span>
         <div class="flex flex-wrap items-center gap-2">
@@ -198,29 +198,29 @@
             class="hidden"
           />
 
-          <!-- Contenedor donde se renderizan dinámicamente todos los lotes -->
+          <!-- Contenedor donde se renderizan dinÃ¡micamente todos los lotes -->
           <g id="capa-lotes"></g>
 
-          <!-- Capa temporal para mostrar el polígono en construcción -->
+          <!-- Capa temporal para mostrar el polÃ­gono en construcciÃ³n -->
           <g id="capa-dibujo-temporal" pointer-events="none"></g>
         </svg>
       </div>
       <p class="text-[11px] text-slate-400 mt-2">
-        Tip: Si tu hoja de Google Sheets está vacía la primera vez, haz clic en "Guardar en Sheets" para enviar los lotes iniciales y crear la tabla automáticamente.
+        Tip: Si tu hoja de Google Sheets estÃ¡ vacÃ­a la primera vez, haz clic en "Guardar en Sheets" para enviar los lotes iniciales y crear la tabla automÃ¡ticamente.
       </p>
     </div>
 
-    <!-- Panel Lateral: Ficha Técnica y Cotizador en Vivo (1 columna) -->
+    <!-- Panel Lateral: Ficha TÃ©cnica y Cotizador en Vivo (1 columna) -->
     <div class="bg-white rounded-xl shadow-md p-6 border border-slate-200 flex flex-col justify-between">
       <div id="panel-vacio" class="text-center py-16 text-slate-400">
-        <p class="text-lg font-medium">Ningún lote seleccionado</p>
+        <p class="text-lg font-medium">NingÃºn lote seleccionado</p>
         <p class="text-sm mt-1">Haz clic en un terreno del mapa para ver su precio, medidas y cotizador.</p>
       </div>
 
       <div id="panel-detalle" class="hidden space-y-4">
         <div class="flex justify-between items-center border-b pb-3">
           <div>
-            <span class="text-xs uppercase tracking-wider text-slate-400 font-bold">Ficha Técnica</span>
+            <span class="text-xs uppercase tracking-wider text-slate-400 font-bold">Ficha TÃ©cnica</span>
             <h3 id="det-id" class="text-2xl font-extrabold text-slate-800">Lote L-101</h3>
           </div>
           <span id="det-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase text-white bg-green-500">
@@ -232,14 +232,14 @@
         <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-lg text-sm">
           <div>
             <p class="text-slate-400 text-xs">Superficie</p>
-            <p id="det-area" class="font-bold text-slate-700">200 m²</p>
+            <p id="det-area" class="font-bold text-slate-700">200 mÂ²</p>
           </div>
           <div>
             <p class="text-slate-400 text-xs">Medidas</p>
             <p id="det-medidas" class="font-bold text-slate-700">10m x 20m</p>
           </div>
           <div>
-            <p class="text-slate-400 text-xs">Precio por m²</p>
+            <p class="text-slate-400 text-xs">Precio por mÂ²</p>
             <p id="det-precio-m2" class="font-bold text-slate-700">$2,500 MXN</p>
           </div>
           <div>
@@ -297,17 +297,17 @@
           </div>
         </div>
 
-        <!-- Acción para Cliente -->
+        <!-- AcciÃ³n para Cliente -->
         <div>
           <a id="btn-whatsapp" href="#" target="_blank"
              class="block w-full text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg shadow transition">
-            Solicitar cotización por WhatsApp
+            Solicitar cotizaciÃ³n por WhatsApp
           </a>
         </div>
 
         <!-- Simulador de Panel Administrativo -->
         <div class="border-t pt-3 space-y-2.5">
-          <p class="text-xs font-bold uppercase text-slate-400">Modo Administrador (Estatus, edición y borrado)</p>
+          <p class="text-xs font-bold uppercase text-slate-400">Modo Administrador (Estatus, ediciÃ³n y borrado)</p>
           <div class="grid grid-cols-3 gap-2">
             <button onclick="cambiarEstado('disponible')" class="bg-green-100 hover:bg-green-200 text-green-800 text-xs font-bold py-2 rounded cursor-pointer">
               Disponible
@@ -358,7 +358,7 @@
 
         <div class="grid grid-cols-3 gap-3">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Superficie (m²)</label>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Superficie (mÂ²)</label>
             <input id="nuevo-area" type="number" min="1" required value="200" class="w-full border rounded-lg px-3 py-1.5 text-sm" />
           </div>
           <div>
@@ -366,14 +366,14 @@
             <input id="nuevo-medidas" type="text" required value="10m x 20m" class="w-full border rounded-lg px-3 py-1.5 text-sm" />
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Precio / m²</label>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Precio / mÂ²</label>
             <input id="nuevo-precio-m2" type="number" min="1" required value="2500" class="w-full border rounded-lg px-3 py-1.5 text-sm" />
           </div>
         </div>
 
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">Colindancias</label>
-          <textarea id="nuevo-colindancias" rows="2" class="w-full border rounded-lg px-3 py-1.5 text-xs">Norte: 10m con calle | Sur: 10m con lote colindante | Oriente: 20m con lote vecino | Poniente: 20m con área verde</textarea>
+          <textarea id="nuevo-colindancias" rows="2" class="w-full border rounded-lg px-3 py-1.5 text-xs">Norte: 10m con calle | Sur: 10m con lote colindante | Oriente: 20m con lote vecino | Poniente: 20m con Ã¡rea verde</textarea>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
@@ -425,7 +425,7 @@
 
         <div class="grid grid-cols-3 gap-3">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Superficie (m²)</label>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Superficie (mÂ²)</label>
             <input id="editar-area" type="number" min="1" required class="w-full border rounded-lg px-3 py-1.5 text-sm" />
           </div>
           <div>
@@ -433,7 +433,7 @@
             <input id="editar-medidas" type="text" required class="w-full border rounded-lg px-3 py-1.5 text-sm" />
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Precio / m²</label>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Precio / mÂ²</label>
             <input id="editar-precio-m2" type="number" min="1" required class="w-full border rounded-lg px-3 py-1.5 text-sm" />
           </div>
         </div>
@@ -474,7 +474,7 @@
       'L-101': {
         id: 'L-101', area: 200, medidas: '10m x 20m', precioM2: 2500, estado: 'disponible',
         points: '50,50 150,50 150,165 50,165', labelX: 100, labelY: 112,
-        colindancias: 'Norte: 10m con calle privada | Sur: 10m con L-201 | Oriente: 20m con L-102 | Poniente: 20m con área verde',
+        colindancias: 'Norte: 10m con calle privada | Sur: 10m con L-201 | Oriente: 20m con L-102 | Poniente: 20m con Ã¡rea verde',
         enganchePct: 20, plazoMeses: 24
       },
       'L-102': {
@@ -498,7 +498,7 @@
       'L-201': {
         id: 'L-201', area: 240, medidas: '12m x 20m', precioM2: 2400, estado: 'disponible',
         points: '50,235 170,235 170,350 50,350', labelX: 110, labelY: 298,
-        colindancias: 'Norte: 12m con L-101 | Sur: 12m con Av. Central | Oriente: 20m con L-202 | Poniente: 20m con área verde',
+        colindancias: 'Norte: 12m con L-101 | Sur: 12m con Av. Central | Oriente: 20m con L-202 | Poniente: 20m con Ã¡rea verde',
         enganchePct: 15, plazoMeses: 36
       },
       'L-202': {
@@ -600,14 +600,14 @@
           const hora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
           guardarEnStorage(`Sincronizado con Google Sheets (${hora})`);
         } else {
-          guardarEnStorage('Hoja vacía — usa "Guardar en Sheets" para subir lotes');
+          guardarEnStorage('Hoja vacÃ­a â€” usa "Guardar en Sheets" para subir lotes');
           if (mostrarAlertaSiVacio) {
-            alert('La hoja de Google Sheets aún no tiene filas de lotes. Haz clic en "Guardar en Sheets" para subir los actuales.');
+            alert('La hoja de Google Sheets aÃºn no tiene filas de lotes. Haz clic en "Guardar en Sheets" para subir los actuales.');
           }
         }
       } catch (err) {
         console.warn('Error al leer Google Sheets:', err);
-        guardarEnStorage('Sin conexión a Sheets — usando datos locales');
+        guardarEnStorage('Sin conexiÃ³n a Sheets â€” usando datos locales');
       }
     }
 
@@ -742,7 +742,7 @@
       if (!loteActual || !lotes[loteActual]) return;
       const idAEliminar = loteActual;
 
-      if (!confirm(`¿Seguro que deseas eliminar el lote ${idAEliminar} del mapa?`)) {
+      if (!confirm(`Â¿Seguro que deseas eliminar el lote ${idAEliminar} del mapa?`)) {
         return;
       }
 
@@ -760,7 +760,7 @@
 
     function exportarRespaldoJson() {
       const respaldo = {
-        proyecto: 'Residencial Los Olivos — Masterplan',
+        proyecto: 'Residencial Los Olivos â€” Masterplan',
         exportadoEn: new Date().toISOString(),
         totalLotes: Object.keys(lotes).length,
         lotes: lotes
@@ -788,7 +788,7 @@
           const lotesImportados = normalizarLotesImportados(datos.lotes && typeof datos.lotes === 'object' ? datos.lotes : datos);
 
           if (!lotesImportados || Object.keys(lotesImportados).length === 0) {
-            alert('El archivo no contiene lotes válidos.');
+            alert('El archivo no contiene lotes vÃ¡lidos.');
             return;
           }
 
@@ -811,7 +811,7 @@
     }
 
     function restablecerDemo() {
-      if (!confirm('¿Deseas restablecer el mapa a los 8 lotes originales y borrar los cambios guardados en este navegador?')) {
+      if (!confirm('Â¿Deseas restablecer el mapa a los 8 lotes originales y borrar los cambios guardados en este navegador?')) {
         return;
       }
       localStorage.removeItem(STORAGE_KEY);
@@ -1016,12 +1016,12 @@
       document.getElementById('det-mensualidad').innerText = `Mensualidad estimada: ~$${mensualidad.toLocaleString()} MXN (${plazoMeses} meses)`;
 
       const textoPlano = [
-        `Hola, me interesa información sobre el Lote ${lote.id}:`,
-        `• Superficie: ${lote.area} m² (${lote.medidas})`,
-        `• Precio total: $${total.toLocaleString()} MXN`,
-        `• Colindancias: ${lote.colindancias}`,
-        `• Enganche elegido (${enganchePct}%): $${montoEnganche.toLocaleString()} MXN`,
-        `• Plazo elegido: ${plazoMeses} meses (~$${mensualidad.toLocaleString()} MXN/mes)`
+        `Hola, me interesa informaciÃ³n sobre el Lote ${lote.id}:`,
+        `â€¢ Superficie: ${lote.area} mÂ² (${lote.medidas})`,
+        `â€¢ Precio total: $${total.toLocaleString()} MXN`,
+        `â€¢ Colindancias: ${lote.colindancias}`,
+        `â€¢ Enganche elegido (${enganchePct}%): $${montoEnganche.toLocaleString()} MXN`,
+        `â€¢ Plazo elegido: ${plazoMeses} meses (~$${mensualidad.toLocaleString()} MXN/mes)`
       ].join('\n');
 
       document.getElementById('btn-whatsapp').href = `https://wa.me/5210000000000?text=${encodeURIComponent(textoPlano)}`;
@@ -1043,7 +1043,7 @@
       const total = lote.area * lote.precioM2;
 
       document.getElementById('det-id').innerText = `Lote ${lote.id}`;
-      document.getElementById('det-area').innerText = `${lote.area} m²`;
+      document.getElementById('det-area').innerText = `${lote.area} mÂ²`;
       document.getElementById('det-medidas').innerText = lote.medidas;
       document.getElementById('det-precio-m2').innerText = `$${lote.precioM2.toLocaleString()} MXN`;
       document.getElementById('det-total').innerText = `$${total.toLocaleString()} MXN`;
