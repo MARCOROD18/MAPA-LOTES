@@ -224,7 +224,7 @@
         >
           <g id="viewport-plano">
             <!-- Fondo base cuando no se ha subido imagen -->
-            <g id="fondo-default">
+            <g id="fondo-default"class="hidden">
               <rect x="0" y="0" width="800" height="550" fill="#f1f5f9" />
               <text x="400" y="275" text-anchor="middle" fill="#64748b" font-size="18" font-weight="bold">
                 Sube la imagen de tu plano del condominio con "Subir plano"
@@ -234,14 +234,13 @@
             <!-- Imagen del plano subido (limpia, sin recuadros encima) -->
             <image
               id="imagen-plano-personalizado"
-              href=""
+              href="bosque-fracciones.jpg"
               x="0"
               y="0"
               width="800"
               height="550"
               preserveAspectRatio="xMidYMid meet"
-              class="hidden"
-            />
+              />
 
             <!-- Capa exclusiva de marcas de estatus sobre el plano -->
             <g id="capa-marcas"></g>
@@ -308,6 +307,7 @@
   <script>
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby1gF9DPHHhqgZVJ30pdRdNlPueDw3kfdqKmnFf0hf0ruR-QL22KaEwBA9UFBSCTxQr/exec';
     const STORAGE_KEY = 'plano_estatus_lotes_v1';
+    const PLANO_FIJO_URL='bosque-fracciones.jpg';
 
     let marcas = cargarMarcasLocales();
     let marcaSeleccionadaId = null;
@@ -710,7 +710,12 @@
         guardarMarcasLocales('Guardado local (error al enviar a Sheets)');
       }
     }
-
+if (PLANO_FIJO_URL) {
+  const imgInicial = document.getElementById('imagen-plano-personalizado');
+  imgInicial.setAttribute('href', PLANO_FIJO_URL);
+  imgInicial.classList.remove('hidden');
+  document.getElementById('fondo-default').classList.add('hidden');
+}
     renderizarMarcas();
     actualizarContador();
     cargarDesdeGoogleSheets(false);
